@@ -17,6 +17,8 @@ workspace = true
 [dependencies]
 atty = { workspace = true }
 base64 = "0.22"
+axum = { workspace = true, features = ["ws"] }
+axum-server = { workspace = true }
 chrono = { workspace = true }
 console = { workspace = true }
 crossterm = "0.27.0"
@@ -25,7 +27,10 @@ indicatif = { workspace = true }
 lazy_static = { workspace = true }
 nix = { version = "0.26.2", features = ["signal"] }
 ratatui = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
+tokio = { workspace = true }
 tracing = { workspace = true }
 tui-term = { workspace = true }
 turbopath = { workspace = true }

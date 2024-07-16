@@ -31,7 +31,9 @@ use turborepo_env::EnvironmentVariableMap;
 use turborepo_repository::package_graph::{PackageGraph, PackageName, PackageNode};
 use turborepo_scm::SCM;
 use turborepo_telemetry::events::generic::GenericEventBuilder;
-use turborepo_ui::{cprint, cprintln, tui, tui::AppSender, BOLD_GREY, GREY, UI};
+use turborepo_ui::{
+    cprint, cprintln, tui, tui::AppSender, wui, wui::WebUISender, BOLD_GREY, GREY, UI,
+};
 
 pub use crate::run::error::Error;
 use crate::{
@@ -182,8 +184,16 @@ impl Run {
             && tui::terminal_big_enough()?)
     }
 
+    pub fn start_web_ui(
+        &self,
+    ) -> Result<Option<(WebUISender, JoinHandle<Result<(), wui::Error>>)>, Error> {
+        let (tx, rx) = tokio::sync::broadcast::channel(100);
+        let handle = tokio::spawn(turborepo_ui::wui::start_ws_server(rx));
+        Ok(Some((WebUISender { tx }, handle)))
+    }
+
     #[allow(clippy::type_complexity)]
-    pub fn start_experimental_ui(
+    pub fn start_terminal_ui(
         &self,
     ) -> Result<Option<(AppSender, JoinHandle<Result<(), tui::Error>>)>, Error> {
         // Print prelude here as this needs to happen before the UI is started

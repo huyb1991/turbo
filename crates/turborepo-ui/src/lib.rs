@@ -10,6 +10,7 @@ mod logs;
 mod output;
 mod prefixed;
 pub mod tui;
+pub mod wui;
 
 use std::{borrow::Cow, env, f64::consts::PI, time::Duration};
 
