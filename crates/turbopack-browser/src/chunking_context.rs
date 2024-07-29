@@ -1,11 +1,12 @@
 use anyhow::{bail, Context, Result};
 use tracing::Instrument;
-use turbo_tasks::{RcStr, Value, ValueToString, Vc};
+use turbo_tasks::{debug::ValueDebug, RcStr, Value, ValueToString, Vc};
 use turbo_tasks_fs::FileSystemPath;
 use turbopack_core::{
     chunk::{
         availability_info::AvailabilityInfo,
         chunk_group::{make_chunk_group, MakeChunkGroupResult},
+        global_information::OptionGlobalInformation,
         Chunk, ChunkGroupResult, ChunkItem, ChunkableModule, ChunkingContext,
         EntryChunkGroupResult, EvaluatableAssets, MinifyType, ModuleId,
     },
@@ -122,6 +123,8 @@ pub struct BrowserChunkingContext {
     minify_type: MinifyType,
     /// Whether to use manifest chunks for lazy compilation
     manifest_chunks: bool,
+    /// Global information
+    global_information: Vc<OptionGlobalInformation>,
 }
 
 impl BrowserChunkingContext {
@@ -133,6 +136,7 @@ impl BrowserChunkingContext {
         asset_root_path: Vc<FileSystemPath>,
         environment: Vc<Environment>,
         runtime_type: RuntimeType,
+        global_information: Vc<OptionGlobalInformation>,
     ) -> BrowserChunkingContextBuilder {
         BrowserChunkingContextBuilder {
             chunking_context: BrowserChunkingContext {
@@ -151,6 +155,7 @@ impl BrowserChunkingContext {
                 runtime_type,
                 minify_type: MinifyType::NoMinify,
                 manifest_chunks: false,
+                global_information,
             },
         }
     }
@@ -238,6 +243,16 @@ impl BrowserChunkingContext {
 
 #[turbo_tasks::value_impl]
 impl ChunkingContext for BrowserChunkingContext {
+    #[turbo_tasks::function]
+    async fn chunk_item_id_from_ident(
+        self: Vc<Self>,
+        ident: Vc<AssetIdent>,
+    ) -> Result<Vc<ModuleId>> {
+        let this = self.await?;
+        dbg!(this.global_information.dbg().await?);
+        Ok(ModuleId::String(ident.to_string().await?.clone_value()).cell())
+    }
+
     #[turbo_tasks::function]
     fn name(&self) -> Vc<RcStr> {
         if let Some(name) = &self.name {
