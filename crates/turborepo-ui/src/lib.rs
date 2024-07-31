@@ -9,6 +9,7 @@ mod line;
 mod logs;
 mod output;
 mod prefixed;
+pub mod sender;
 pub mod tui;
 pub mod wui;
 

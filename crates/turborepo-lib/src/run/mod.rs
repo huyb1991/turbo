@@ -32,7 +32,8 @@ use turborepo_repository::package_graph::{PackageGraph, PackageName, PackageNode
 use turborepo_scm::SCM;
 use turborepo_telemetry::events::generic::GenericEventBuilder;
 use turborepo_ui::{
-    cprint, cprintln, tui, tui::AppSender, wui, wui::WebUISender, BOLD_GREY, GREY, UI,
+    cprint, cprintln, sender::UISender, tui, tui::AppSender, wui, wui::WebUISender, BOLD_GREY,
+    GREY, UI,
 };
 
 pub use crate::run::error::Error;
@@ -226,7 +227,7 @@ impl Run {
 
     pub async fn run(
         &mut self,
-        experimental_ui_sender: Option<AppSender>,
+        ui_sender: Option<impl UISender + 'static>,
         is_watch: bool,
     ) -> Result<i32, Error> {
         let skip_cache_writes = self.opts.runcache_opts.skip_writes;
@@ -415,7 +416,7 @@ impl Run {
             self.processes.clone(),
             &self.repo_root,
             global_env,
-            experimental_ui_sender,
+            ui_sender,
             is_watch,
         );
 

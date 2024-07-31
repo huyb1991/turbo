@@ -25,7 +25,9 @@ use turborepo_telemetry::events::{
     generic::GenericEventBuilder, task::PackageTaskEventBuilder, EventBuilder, TrackedErrors,
 };
 use turborepo_ui::{
-    tui::{self, event::CacheResult, AppSender, TuiTask},
+    sender::{TaskSender, UISender},
+    tui::{self, event::CacheResult, AppSender},
+    wui::WebUISender,
     ColorSelector, OutputClient, OutputSink, OutputWriter, PrefixedUI, UI,
 };
 use which::which;
@@ -49,7 +51,7 @@ use crate::{
 };
 
 // This holds the whole world
-pub struct Visitor<'a> {
+pub struct Visitor<'a, U> {
     color_cache: ColorSelector,
     dry: bool,
     global_env: EnvironmentVariableMap,
@@ -64,8 +66,8 @@ pub struct Visitor<'a> {
     sink: OutputSink<StdWriter>,
     task_hasher: TaskHasher<'a>,
     ui: UI,
-    experimental_ui_sender: Option<AppSender>,
     is_watch: bool,
+    ui_sender: Option<U>,
 }
 
 #[derive(Debug, thiserror::Error, Diagnostic)]
@@ -98,7 +100,7 @@ pub enum Error {
     InternalErrors(String),
 }
 
-impl<'a> Visitor<'a> {
+impl<'a, U: UISender + 'static> Visitor<'a, U> {
     // Disabling this lint until we stop adding state to the visitor.
     // Once we have the full picture we will go about grouping these pieces of data
     // together
@@ -117,7 +119,7 @@ impl<'a> Visitor<'a> {
         manager: ProcessManager,
         repo_root: &'a AbsoluteSystemPath,
         global_env: EnvironmentVariableMap,
-        experimental_ui_sender: Option<AppSender>,
+        ui_sender: Option<U>,
         is_watch: bool,
     ) -> Self {
         let task_hasher = TaskHasher::new(
@@ -145,7 +147,7 @@ impl<'a> Visitor<'a> {
             task_hasher,
             ui,
             global_env,
-            experimental_ui_sender,
+            ui_sender,
             is_watch,
         }
     }
@@ -278,7 +280,7 @@ impl<'a> Visitor<'a> {
                     let vendor_behavior =
                         Vendor::infer().and_then(|vendor| vendor.behavior.as_ref());
 
-                    let output_client = if let Some(handle) = &self.experimental_ui_sender {
+                    let output_client = if let Some(handle) = &self.ui_sender {
                         TaskOutput::UI(handle.task(info.to_string()))
                     } else {
                         TaskOutput::Direct(self.output_client(&info, vendor_behavior))
@@ -316,7 +318,7 @@ impl<'a> Visitor<'a> {
         drop(factory);
 
         if !self.is_watch {
-            if let Some(handle) = &self.experimental_ui_sender {
+            if let Some(handle) = &self.ui_sender {
                 handle.stop();
             }
         }
@@ -491,8 +493,8 @@ impl<'a> Visitor<'a> {
 
     pub fn dry_run(&mut self) {
         self.dry = true;
-        // No need to start a TUI on dry run
-        self.experimental_ui_sender = None;
+        // No need to start a UI on dry run
+        self.ui_sender = None;
     }
 }
 
@@ -544,9 +546,9 @@ impl std::io::Write for StdWriter {
 
 /// Small wrapper over our two output types that defines a shared interface for
 /// interacting with them.
-enum TaskOutput<W> {
+enum TaskOutput<W, U> {
     Direct(OutputClient<W>),
-    UI(tui::TuiTask),
+    UI(TaskSender<U>),
 }
 
 fn turbo_regex() -> &'static Regex {
@@ -624,16 +626,16 @@ impl TaskErrorCause {
     }
 }
 
-struct ExecContextFactory<'a> {
-    visitor: &'a Visitor<'a>,
+struct ExecContextFactory<'a, U> {
+    visitor: &'a Visitor<'a, U>,
     errors: Arc<Mutex<Vec<TaskError>>>,
     manager: ProcessManager,
     engine: &'a Arc<Engine>,
 }
 
-impl<'a> ExecContextFactory<'a> {
+impl<'a, U: UISender> ExecContextFactory<'a, U> {
     pub fn new(
-        visitor: &'a Visitor,
+        visitor: &'a Visitor<'a, U>,
         errors: Arc<Mutex<Vec<TaskError>>>,
         manager: ProcessManager,
         engine: &'a Arc<Engine>,
@@ -662,7 +664,7 @@ impl<'a> ExecContextFactory<'a> {
         ExecContext {
             engine: self.engine.clone(),
             ui: self.visitor.ui,
-            experimental_ui: self.visitor.experimental_ui_sender.is_some(),
+            experimental_ui: self.visitor.ui_sender.is_some(),
             is_github_actions: self.visitor.run_opts.is_github_actions,
             pretty_prefix: self
                 .visitor
@@ -750,7 +752,7 @@ impl ExecContext {
         &mut self,
         parent_span_id: Option<tracing::Id>,
         tracker: TaskTracker<()>,
-        output_client: TaskOutput<impl std::io::Write>,
+        output_client: TaskOutput<impl std::io::Write, impl UISender>,
         callback: oneshot::Sender<Result<(), StopExecution>>,
         spaces_client: Option<SpacesTaskClient>,
         telemetry: &PackageTaskEventBuilder,
@@ -839,25 +841,27 @@ impl ExecContext {
         Ok(())
     }
 
-    fn prefixed_ui<'a, W: Write>(
+    fn prefixed_ui<'a, W: Write, U: UISender>(
         &self,
-        output_client: &'a TaskOutput<W>,
-    ) -> TaskCacheOutput<OutputWriter<'a, W>> {
+        output_client: &'a TaskOutput<W, U>,
+    ) -> TaskCacheOutput<OutputWriter<'a, W>, U> {
         match output_client {
-            TaskOutput::Direct(client) => TaskCacheOutput::Direct(Visitor::prefixed_ui(
-                self.ui,
-                self.is_github_actions,
-                client.stdout(),
-                client.stderr(),
-                self.pretty_prefix.clone(),
-            )),
+            TaskOutput::Direct(client) => {
+                TaskCacheOutput::Direct(Visitor::<AppSender>::prefixed_ui(
+                    self.ui,
+                    self.is_github_actions,
+                    client.stdout(),
+                    client.stderr(),
+                    self.pretty_prefix.clone(),
+                ))
+            }
             TaskOutput::UI(task) => TaskCacheOutput::UI(task.clone()),
         }
     }
 
     async fn execute_inner(
         &mut self,
-        output_client: &TaskOutput<impl std::io::Write>,
+        output_client: &TaskOutput<impl std::io::Write, impl UISender>,
         telemetry: &PackageTaskEventBuilder,
     ) -> Result<ExecOutcome, InternalError> {
         let task_start = Instant::now();
@@ -1090,13 +1094,13 @@ impl DryRunExecContext {
 }
 
 /// Struct for displaying information about task's cache
-enum TaskCacheOutput<W> {
+enum TaskCacheOutput<W, U> {
     Direct(PrefixedUI<W>),
-    UI(TuiTask),
+    UI(TaskSender<U>),
 }
 
-impl<W: Write> TaskCacheOutput<W> {
-    fn task_writer(&mut self) -> Either<turborepo_ui::PrefixedWriter<&mut W>, TuiTask> {
+impl<W: Write, U: UISender> TaskCacheOutput<W, U> {
+    fn task_writer(&mut self) -> Either<turborepo_ui::PrefixedWriter<&mut W>, TaskSender<U>> {
         match self {
             TaskCacheOutput::Direct(prefixed) => Either::Left(prefixed.output_prefixed_writer()),
             TaskCacheOutput::UI(task) => Either::Right(task.clone()),
@@ -1113,7 +1117,7 @@ impl<W: Write> TaskCacheOutput<W> {
     }
 }
 
-impl<W: Write> CacheOutput for TaskCacheOutput<W> {
+impl<W: Write, U: UISender> CacheOutput for TaskCacheOutput<W, U> {
     fn status(&mut self, message: &str, result: CacheResult) {
         match self {
             TaskCacheOutput::Direct(direct) => direct.output(message),
@@ -1142,7 +1146,7 @@ impl<W: Write> CacheOutput for TaskCacheOutput<W> {
 }
 
 /// Struct for displaying information about task
-impl<W: Write> TaskOutput<W> {
+impl<W: Write, U: UISender> TaskOutput<W, U> {
     pub fn finish(self, use_error: bool, is_cache_hit: bool) -> std::io::Result<Option<Vec<u8>>> {
         match self {
             TaskOutput::Direct(client) => client.finish(use_error),
@@ -1151,21 +1155,21 @@ impl<W: Write> TaskOutput<W> {
         }
     }
 
-    pub fn stdout(&self) -> Either<OutputWriter<W>, TuiTask> {
+    pub fn stdout(&self) -> Either<OutputWriter<W>, TaskSender<U>> {
         match self {
             TaskOutput::Direct(client) => Either::Left(client.stdout()),
             TaskOutput::UI(client) => Either::Right(client.clone()),
         }
     }
 
-    pub fn stderr(&self) -> Either<OutputWriter<W>, TuiTask> {
+    pub fn stderr(&self) -> Either<OutputWriter<W>, TaskSender<U>> {
         match self {
             TaskOutput::Direct(client) => Either::Left(client.stderr()),
             TaskOutput::UI(client) => Either::Right(client.clone()),
         }
     }
 
-    pub fn task_logs(&self) -> Either<OutputWriter<W>, TuiTask> {
+    pub fn task_logs(&self) -> Either<OutputWriter<W>, TaskSender<U>> {
         match self {
             TaskOutput::Direct(client) => Either::Left(client.stdout()),
             TaskOutput::UI(client) => Either::Right(client.clone()),

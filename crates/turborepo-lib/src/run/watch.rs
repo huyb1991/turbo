@@ -10,7 +10,7 @@ use tokio::{
 };
 use turborepo_repository::package_graph::PackageName;
 use turborepo_telemetry::events::command::CommandEventBuilder;
-use turborepo_ui::{tui, tui::AppSender};
+use turborepo_ui::{sender::UISender, tui, tui::AppSender};
 
 use crate::{
     cli::{Command, RunArgs},

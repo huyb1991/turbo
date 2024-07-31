@@ -1,6 +1,8 @@
 //! Web UI for Turborepo. Creates a WebSocket server that can be subscribed to
 //! by a web client to display the status of tasks.
 
+use std::io::Write;
+
 use axum::{
     extract::{
         ws::{Message, WebSocket},
@@ -13,7 +15,10 @@ use axum::{
 use serde::Serialize;
 use thiserror::Error;
 
-use crate::tui::event::{CacheResult, Event, OutputLogs, TaskResult};
+use crate::{
+    sender::{TaskSender, UISender},
+    tui::event::{CacheResult, Event, OutputLogs, TaskResult},
+};
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -23,14 +28,54 @@ pub enum Error {
     WebSocket(#[source] axum::Error),
 }
 
+#[derive(Clone)]
 pub struct WebUISender {
     pub tx: tokio::sync::broadcast::Sender<WebUIEvent>,
+}
+
+impl UISender for WebUISender {
+    type Error = std::io::Error;
+
+    fn start_task(&self, task: String, output_logs: OutputLogs) {
+        todo!()
+    }
+
+    fn end_task(&self, task: String, result: TaskResult) {
+        todo!()
+    }
+
+    fn status(&self, task: String, status: String, result: CacheResult) {
+        todo!()
+    }
+
+    fn set_stdin(&self, task: String, stdin: Box<dyn Write + Send>) {
+        todo!()
+    }
+
+    fn task(&self, task: String) -> TaskSender<Self>
+    where
+        Self: Sized,
+    {
+        todo!()
+    }
+
+    fn stop(&self) {
+        todo!()
+    }
+
+    fn update_tasks(&self, tasks: Vec<String>) -> Result<(), Self::Error> {
+        todo!()
+    }
+
+    fn output(&self, task: String, output: Vec<u8>) -> Result<(), Self::Error> {
+        todo!()
+    }
 }
 
 // Specific events that the websocket server can send to the client,
 // not all the `Event` types from the TUI
 #[derive(Debug, Clone, Serialize)]
-enum WebUIEvent {
+pub enum WebUIEvent {
     StartTask {
         task: String,
         output_logs: OutputLogs,

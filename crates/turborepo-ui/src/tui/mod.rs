@@ -12,7 +12,7 @@ mod term_output;
 pub use app::{run_app, terminal_big_enough};
 use clipboard::copy_to_clipboard;
 use event::{Event, TaskResult};
-pub use handle::{AppReceiver, AppSender, TuiTask};
+pub use handle::{AppReceiver, AppSender};
 use input::{input, InputOptions};
 pub use pane::TerminalPane;
 pub use table::TaskTable;
