@@ -2,6 +2,7 @@ use std::future::Future;
 
 use tracing::error;
 use turborepo_telemetry::events::command::CommandEventBuilder;
+use turborepo_ui::sender::UISender;
 
 use crate::{commands::CommandBase, run, run::builder::RunBuilder, signal::SignalHandler};
 
@@ -52,12 +53,12 @@ pub async fn run(base: CommandBase, telemetry: CommandEventBuilder) -> Result<i3
             analytics_handle.close_with_timeout().await;
         }
 
-        if let (Some(handle), Some(sender)) = (handle, sender) {
-            //sender.stop();
-            if let Err(e) = handle.await.expect("render thread panicked") {
-                error!("error encountered rendering tui: {e}");
-            }
-        }
+        // if let (Some(handle), Some(sender)) = (handle, sender) {
+        //     //sender.stop();
+        //     if let Err(e) = handle.await.expect("render thread panicked") {
+        //         error!("error encountered rendering tui: {e}");
+        //     }
+        // }
 
         result
     };

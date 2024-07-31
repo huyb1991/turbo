@@ -8,12 +8,15 @@ use axum::{
         ws::{Message, WebSocket},
         State, WebSocketUpgrade,
     },
+    http::Method,
     response::IntoResponse,
     routing::get,
     Router,
 };
 use serde::Serialize;
 use thiserror::Error;
+use tower_http::cors::{Any, CorsLayer};
+use tracing::log::warn;
 
 use crate::{
     sender::{TaskSender, UISender},
@@ -37,38 +40,58 @@ impl UISender for WebUISender {
     type Error = std::io::Error;
 
     fn start_task(&self, task: String, output_logs: OutputLogs) {
-        todo!()
+        self.tx
+            .send(WebUIEvent::StartTask { task, output_logs })
+            .ok();
     }
 
     fn end_task(&self, task: String, result: TaskResult) {
-        todo!()
+        self.tx.send(WebUIEvent::EndTask { task, result }).ok();
     }
 
     fn status(&self, task: String, status: String, result: CacheResult) {
-        todo!()
+        self.tx
+            .send(WebUIEvent::Status {
+                task,
+                status,
+                result,
+            })
+            .ok();
     }
 
     fn set_stdin(&self, task: String, stdin: Box<dyn Write + Send>) {
-        todo!()
+        warn!("stdin is not supported (yet) in web ui");
     }
 
     fn task(&self, task: String) -> TaskSender<Self>
     where
         Self: Sized,
     {
-        todo!()
+        TaskSender {
+            name: task,
+            handle: self.clone(),
+            logs: Default::default(),
+        }
     }
 
     fn stop(&self) {
-        todo!()
+        self.tx.send(WebUIEvent::Stop).ok();
     }
 
     fn update_tasks(&self, tasks: Vec<String>) -> Result<(), Self::Error> {
-        todo!()
+        self.tx
+            .send(WebUIEvent::UpdateTasks { tasks })
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::BrokenPipe, "WebUI is closed"))?;
+
+        Ok(())
     }
 
     fn output(&self, task: String, output: Vec<u8>) -> Result<(), Self::Error> {
-        todo!()
+        self.tx
+            .send(WebUIEvent::TaskOutput { task, output })
+            .map_err(|_| std::io::Error::new(std::io::ErrorKind::BrokenPipe, "WebUI is closed"))?;
+
+        Ok(())
     }
 }
 
@@ -96,29 +119,7 @@ pub enum WebUIEvent {
     UpdateTasks {
         tasks: Vec<String>,
     },
-}
-
-impl WebUIEvent {
-    fn from_event(event: Event) -> Option<Self> {
-        match event {
-            Event::StartTask { task, output_logs } => {
-                Some(WebUIEvent::StartTask { task, output_logs })
-            }
-            Event::TaskOutput { task, output } => Some(WebUIEvent::TaskOutput { task, output }),
-            Event::EndTask { task, result } => Some(WebUIEvent::EndTask { task, result }),
-            Event::Status {
-                task,
-                status,
-                result,
-            } => Some(WebUIEvent::Status {
-                task,
-                status,
-                result,
-            }),
-            Event::UpdateTasks { tasks } => Some(WebUIEvent::UpdateTasks { tasks }),
-            _ => None,
-        }
-    }
+    Stop,
 }
 
 struct AppState {
@@ -151,11 +152,19 @@ async fn handle_socket(mut socket: WebSocket, state: AppState) {
 pub async fn start_ws_server(
     rx: tokio::sync::broadcast::Receiver<WebUIEvent>,
 ) -> Result<(), Error> {
+    let cors = CorsLayer::new()
+        // allow `GET` and `POST` when accessing the resource
+        .allow_methods([Method::GET, Method::POST])
+        // allow requests from any origin
+        .allow_origin(Any);
+
     let app = Router::new()
         .route("/ws", get(handler))
+        .layer(cors)
         .with_state(AppState { rx });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:1337").await?;
+    println!("Web UI listening on port 1337");
     axum::serve(listener, app).await?;
 
     Ok(())

@@ -15,6 +15,8 @@ pub trait UISender: Clone + Send + Sync + 'static {
     fn set_stdin(&self, task: String, stdin: Box<dyn std::io::Write + Send>);
 
     fn output(&self, task: String, output: Vec<u8>) -> Result<(), Self::Error>;
+
+    /// Construct a sender configured for a specific task
     fn task(&self, task: String) -> TaskSender<Self>
     where
         Self: Sized;
