@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/async-modules/async-reexport-side-effects-split/input/side-effects/reexport-internal-test.js"],"sourcesContent":["import { a, b, c } from \"./reexport-internal.js\";\n\nexport default {\n  a,\n  b,\n  c,\n};\n"],"names":[],"mappings":";;;;;;;;;;;;;uCAEe;IACb,GAAA,mQAAA,CAAA,IAAC;IACD,GAAA,mQAAA,CAAA,IAAC;IACD,GAAA,kSAAA,CAAA,IAAC;AACH"}},
+    {"offset": {"line": 24, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}},
+    {"offset": {"line": 42, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/async-modules/async-reexport-side-effects-split/input/side-effects/inner.js"],"sourcesContent":["await 1;\n\nexport const a = \"a\";\nexport const b = \"b\";\n"],"names":[],"mappings":";;;;AAAA,MAAM;AAEC,MAAM,IAAI;AACV,MAAM,IAAI"}},
+    {"offset": {"line": 49, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

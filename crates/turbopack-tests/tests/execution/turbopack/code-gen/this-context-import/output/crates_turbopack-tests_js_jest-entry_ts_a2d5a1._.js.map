@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/js/jest-entry.ts"],"sourcesContent":["declare const __turbopack_external_require__: (id: string) => any;\nconst jest = __turbopack_external_require__(\"jest-circus\");\n\nconst uncaughtExceptions: string[] = [];\nconst unhandledRejections: string[] = [];\n\nprocess.on(\"uncaughtException\", (e) => {\n  uncaughtExceptions.push(String(e));\n});\n\nprocess.on(\"unhandledRejection\", (e) => {\n  unhandledRejections.push(String(e));\n});\n\nexport default async function run() {\n  const jestResult = await jest.run();\n\n  // Wait a full tick for unhandledRejection handlers to run -- a microtask is not sufficient.\n  await new Promise((resolve) => setTimeout(resolve, 0));\n\n  return {\n    jestResult,\n    uncaughtExceptions,\n    unhandledRejections,\n  };\n}\n"],"names":[],"mappings":";;;AACA,MAAM,OAAO,+BAA+B;AAE5C,MAAM,qBAA+B,EAAE;AACvC,MAAM,sBAAgC,EAAE;AAExC,QAAQ,EAAE,CAAC,qBAAqB,CAAC;IAC/B,mBAAmB,IAAI,CAAC,OAAO;AACjC;AAEA,QAAQ,EAAE,CAAC,sBAAsB,CAAC;IAChC,oBAAoB,IAAI,CAAC,OAAO;AAClC;AAEe,eAAe;IAC5B,MAAM,aAAa,MAAM,KAAK,GAAG;IAEjC,4FAA4F;IAC5F,MAAM,IAAI,QAAQ,CAAC,UAAY,WAAW,SAAS;IAEnD,OAAO;QACL;QACA;QACA;IACF;AACF"}},
+    {"offset": {"line": 27, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

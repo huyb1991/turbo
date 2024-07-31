@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/webpack/chunks/__skipped__/inline-options/input/dir3/c.js"],"sourcesContent":["export default \"c\";\n"],"names":[],"mappings":";;;uCAAe"}},
+    {"offset": {"line": 9, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/async-modules/export-all/input/single.js"],"sourcesContent":["export const single = 1;\n"],"names":[],"mappings":";;;AAAO,MAAM,SAAS"}},
+    {"offset": {"line": 9, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

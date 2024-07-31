@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/basic/node-default-import/input/node_modules/esm-package/invalid-exports.js"],"sourcesContent":["exports.named = \"named\";"],"names":[],"mappings":";AAAA,QAAQ,KAAK,GAAG"}},
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

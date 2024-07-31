@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/chunking/dynamic-import-cycle/input/a.js"],"sourcesContent":["export function test() {\n  return import(\"./b.js\");\n}\n\nexport const ok = \"a\";\n"],"names":[],"mappings":";;;;AAAO,SAAS;IACd;AACF;AAEO,MAAM,KAAK"}},
+    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

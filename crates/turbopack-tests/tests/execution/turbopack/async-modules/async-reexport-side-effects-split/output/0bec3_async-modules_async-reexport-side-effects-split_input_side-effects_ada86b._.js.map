@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":["turbopack://[project]/crates/turbopack-tests/tests/execution/turbopack/async-modules/async-reexport-side-effects-split/input/side-effects/reexport-external-test.js"],"sourcesContent":["import { a, b, c } from \"./reexport-external.js\";\n\nexport default {\n  a,\n  b,\n  c,\n};\n"],"names":[],"mappings":";;;;;;;;;;;;;uCAEe;IACb,GAAA,mSAAA,CAAA,IAAC;IACD,GAAA,mSAAA,CAAA,IAAC;IACD,GAAA,kSAAA,CAAA,IAAC;AACH"}},
+    {"offset": {"line": 24, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"A"}}]
+}

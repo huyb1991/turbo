@@ -1,0 +1,45 @@
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["crates_turbopack-tests_61e47c._.js", {
+
+"[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/one/file.js [test] (ecmascript, async loader)": (({ r: __turbopack_require__, f: __turbopack_module_context__, i: __turbopack_import__, s: __turbopack_esm__, v: __turbopack_export_value__, n: __turbopack_export_namespace__, c: __turbopack_cache__, M: __turbopack_modules__, l: __turbopack_load__, j: __turbopack_dynamic__, P: __turbopack_resolve_absolute_path__, U: __turbopack_relative_url__, R: __turbopack_resolve_module_id_path__, g: global, __dirname }) => (() => {
+
+__turbopack_export_value__((__turbopack_import__) => {
+    return Promise.all([
+  "a587c_tests_execution_webpack_chunks_issue-2443_input_dir_one_file_f6f874.js"
+].map((chunk) => __turbopack_load__(chunk))).then(() => {
+        return __turbopack_import__("[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/one/file.js [test] (ecmascript)");
+    });
+});
+
+})()),
+"[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/three/file.js [test] (ecmascript, async loader)": (({ r: __turbopack_require__, f: __turbopack_module_context__, i: __turbopack_import__, s: __turbopack_esm__, v: __turbopack_export_value__, n: __turbopack_export_namespace__, c: __turbopack_cache__, M: __turbopack_modules__, l: __turbopack_load__, j: __turbopack_dynamic__, P: __turbopack_resolve_absolute_path__, U: __turbopack_relative_url__, R: __turbopack_resolve_module_id_path__, g: global, __dirname }) => (() => {
+
+__turbopack_export_value__((__turbopack_import__) => {
+    return Promise.resolve().then(() => {
+        return __turbopack_import__("[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/three/file.js [test] (ecmascript)");
+    });
+});
+
+})()),
+"[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/two/file.js [test] (ecmascript, async loader)": (({ r: __turbopack_require__, f: __turbopack_module_context__, i: __turbopack_import__, s: __turbopack_esm__, v: __turbopack_export_value__, n: __turbopack_export_namespace__, c: __turbopack_cache__, M: __turbopack_modules__, l: __turbopack_load__, j: __turbopack_dynamic__, P: __turbopack_resolve_absolute_path__, U: __turbopack_relative_url__, R: __turbopack_resolve_module_id_path__, g: global, __dirname }) => (() => {
+
+__turbopack_export_value__((__turbopack_import__) => {
+    return Promise.all([
+  "a587c_tests_execution_webpack_chunks_issue-2443_input_dir_two_file_71618b.js"
+].map((chunk) => __turbopack_load__(chunk))).then(() => {
+        return __turbopack_import__("[project]/crates/turbopack-tests/tests/execution/webpack/chunks/issue-2443/input/dir/two/file.js [test] (ecmascript)");
+    });
+});
+
+})()),
+"[project]/crates/turbopack-tests/js/jest-entry.ts [test] (ecmascript, async loader)": (({ r: __turbopack_require__, f: __turbopack_module_context__, i: __turbopack_import__, s: __turbopack_esm__, v: __turbopack_export_value__, n: __turbopack_export_namespace__, c: __turbopack_cache__, M: __turbopack_modules__, l: __turbopack_load__, j: __turbopack_dynamic__, P: __turbopack_resolve_absolute_path__, U: __turbopack_relative_url__, R: __turbopack_resolve_module_id_path__, g: global, __dirname }) => (() => {
+
+__turbopack_export_value__((__turbopack_import__) => {
+    return Promise.all([
+  "crates_turbopack-tests_js_jest-entry_ts_a2d5a1._.js"
+].map((chunk) => __turbopack_load__(chunk))).then(() => {
+        return __turbopack_import__("[project]/crates/turbopack-tests/js/jest-entry.ts [test] (ecmascript)");
+    });
+});
+
+})()),
+}]);
