@@ -1,43 +1,95 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Ansi from "ansi-to-react";
+import { useInterval } from "usehooks-ts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function TaskLogs() {
   const [logs, setLogs] = useState<{ [s: string]: string }>({});
+  const [connected, setConnected] = useState(false);
+  const socketRef = useRef<WebSocket | null>(null);
+  useInterval(() => {
+    if (
+      !socketRef.current ||
+      socketRef.current.readyState === WebSocket.CLOSED
+    ) {
+      socketRef.current = new WebSocket("ws://127.0.0.1:1337/ws");
+      const textDecoder = new TextDecoder();
+
+      socketRef.current.onerror = (event) => {
+        socketRef.current.send(
+          JSON.stringify({
+            type: "CatchUp",
+            payload: { start_id: 0 },
+          })
+        );
+      };
+
+      socketRef.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const byteArray = new Uint8Array(data.payload.output);
+        const rawLogs = textDecoder.decode(byteArray);
+        console.log(data);
+        if (data.type === "TaskOutput") {
+          setLogs((logs) => {
+            return {
+              ...logs,
+              [data.payload.task]: (logs[data.payload.task] ?? "") + rawLogs,
+            };
+          });
+        }
+        socketRef.current.send(
+          JSON.stringify({
+            type: "Ack",
+            payload: { id: data.id },
+          })
+        );
+      };
+
+      socketRef.current.onopen = () => {
+        setConnected(true);
+      };
+    }
+  }, 1000);
+
   useEffect(() => {
-    const socket = new WebSocket("ws://127.0.0.1:1337/ws");
-    const textDecoder = new TextDecoder();
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      const byteArray = new Uint8Array(data.TaskOutput.output);
-      const rawLogs = textDecoder.decode(byteArray);
-
-      if (data.TaskOutput) {
-        setLogs((logs) => {
-          return {
-            ...logs,
-            [data.TaskOutput.task]:
-              (logs[data.TaskOutput.task] ?? "") + rawLogs,
-          };
-        });
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
       }
     };
-    return () => {
-      socket.close();
-    };
-  }, [setLogs]);
+  });
 
   return (
-    <div>
-      <h1>Task Logs</h1>
-      {Object.entries(logs).map(([taskName, taskLogs]) => (
-        <div key={taskName}>
-          <h1>{taskName}</h1>
-          <Ansi className="whitespace-pre-wrap">{taskLogs}</Ansi>
-        </div>
-      ))}
+    <div className="bg-gray-900 min-h-screen">
+      <div className="flex justify-between bg-gradient-to-r p-4 from-indigo-500 via-purple-500 to-pink-500">
+        <h1 className="text-white font-semibold">TURBO STUDIO</h1>
+      </div>
+      <div>
+        {!connected && <div className="text-white p-4">Connecting...</div>}
+
+        <Tabs
+          orientation="vertical"
+          defaultValue="account"
+          className="w-[400px]"
+        >
+          <TabsList>
+            {Object.entries(logs).map(([taskName]) => (
+              <TabsTrigger value={taskName} key={taskName}>
+                {taskName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {Object.entries(logs).map(([taskName, taskLogs]) => (
+            <TabsContent value={taskName} key={taskName}>
+              <Ansi className="whitespace-pre-wrap text-white p-5">
+                {taskLogs}
+              </Ansi>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 }
