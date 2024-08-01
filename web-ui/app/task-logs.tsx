@@ -48,6 +48,7 @@ export default function TaskLogs() {
       };
 
       socketRef.current.onopen = () => {
+        console.log("connected!");
         setConnected(true);
       };
     }

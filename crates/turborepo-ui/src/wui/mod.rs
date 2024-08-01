@@ -188,7 +188,6 @@ async fn handle_socket_inner(mut socket: WebSocket, state: AppState) -> Result<(
                 })?;
 
                 state.messages.push((event, id));
-                println!("1");
                 socket.send(Message::Text(message_payload)).await?;
             }
             // Every 100ms, check if we need to resend any messages
@@ -196,7 +195,6 @@ async fn handle_socket_inner(mut socket: WebSocket, state: AppState) -> Result<(
                 for (event, id) in &state.messages {
                     if !state.acks.contains(&id) {
                         let message_payload = serde_json::to_string(event).unwrap();
-                        println!("2");
                         socket.send(Message::Text(message_payload)).await?;
                     }
                 };
@@ -245,7 +243,7 @@ pub async fn start_ws_server(
         });
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:1337").await?;
-    println!("Web UI listening on port 1337");
+    println!("Web UI listening on port 1337...");
     axum::serve(listener, app).await?;
 
     Ok(())

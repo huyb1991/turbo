@@ -45,7 +45,7 @@ pub async fn run(base: CommandBase, telemetry: CommandEventBuilder) -> Result<i3
             .build(&handler, telemetry)
             .await?;
 
-        let (sender, handle) = run.start_web_ui()?.unzip();
+        let (sender, handle) = run.start_web_ui(&handler)?.unzip();
 
         let result = run.run(sender.clone(), false).await;
 
