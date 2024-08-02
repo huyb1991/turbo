@@ -1,7 +1,4 @@
-use std::{
-    io::Write,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use crate::tui::event::{CacheResult, OutputLogs, TaskResult};
 

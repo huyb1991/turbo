@@ -26,8 +26,7 @@ use turborepo_telemetry::events::{
 };
 use turborepo_ui::{
     sender::{TaskSender, UISender},
-    tui::{self, event::CacheResult, AppSender},
-    wui::WebUISender,
+    tui::{event::CacheResult, AppSender},
     ColorSelector, OutputClient, OutputSink, OutputWriter, PrefixedUI, UI,
 };
 use which::which;

@@ -1,7 +1,4 @@
-use std::{
-    sync::{mpsc, Arc, Mutex},
-    time::Instant,
-};
+use std::{sync::mpsc, time::Instant};
 
 use super::{
     event::{CacheResult, OutputLogs},

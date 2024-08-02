@@ -187,11 +187,7 @@ impl Run {
 
     pub fn start_web_ui(
         &self,
-        signal_handler: &SignalHandler,
     ) -> Result<Option<(WebUISender, JoinHandle<Result<(), wui::Error>>)>, Error> {
-        let subscriber = signal_handler
-            .subscribe()
-            .ok_or(Error::SignalHandler(std::io::ErrorKind::BrokenPipe.into()))?;
         let (tx, rx) = tokio::sync::broadcast::channel(100);
 
         let handle = tokio::spawn(turborepo_ui::wui::start_ws_server(rx));

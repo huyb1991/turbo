@@ -26,7 +26,7 @@ use tracing::log::warn;
 
 use crate::{
     sender::{TaskSender, UISender},
-    tui::event::{CacheResult, Event, OutputLogs, TaskResult},
+    tui::event::{CacheResult, OutputLogs, TaskResult},
 };
 
 #[derive(Debug, Error)]
@@ -69,7 +69,7 @@ impl UISender for WebUISender {
             .ok();
     }
 
-    fn set_stdin(&self, task: String, stdin: Box<dyn Write + Send>) {
+    fn set_stdin(&self, _: String, _: Box<dyn Write + Send>) {
         warn!("stdin is not supported (yet) in web ui");
     }
 
