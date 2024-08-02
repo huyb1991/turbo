@@ -1,7 +1,12 @@
 //! Web UI for Turborepo. Creates a WebSocket server that can be subscribed to
 //! by a web client to display the status of tasks.
 
-use std::{collections::HashSet, io::Write};
+use std::{
+    cell::RefCell,
+    collections::HashSet,
+    io::Write,
+    sync::{atomic::AtomicU32, Arc},
+};
 
 use axum::{
     extract::{
@@ -15,7 +20,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tokio::select;
+use tokio::{select, sync::Mutex};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::log::warn;
 
@@ -147,18 +152,17 @@ pub enum ClientMessage {
 
 struct AppState {
     rx: tokio::sync::broadcast::Receiver<WebUIEvent>,
-    acks: HashSet<u32>,
-    messages: Vec<(WebUIEvent, u32)>,
-    current_id: u32,
+    // We use a tokio::sync::Mutex here because we want this future to be Send.
+    messages: Arc<Mutex<RefCell<Vec<(WebUIEvent, u32)>>>>,
+    current_id: Arc<AtomicU32>,
 }
 
 impl Clone for AppState {
     fn clone(&self) -> Self {
         Self {
             rx: self.rx.resubscribe(),
-            acks: self.acks.clone(),
             messages: self.messages.clone(),
-            current_id: self.current_id,
+            current_id: self.current_id.clone(),
         }
     }
 }
@@ -175,29 +179,36 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
 
 async fn handle_socket_inner(mut socket: WebSocket, state: AppState) -> Result<(), Error> {
     let mut state = state.clone();
+    let mut acks = HashSet::new();
     let mut interval = tokio::time::interval(std::time::Duration::from_millis(100));
-    loop {
+    'socket_loop: loop {
         select! {
             biased;
             Ok(event) = state.rx.recv() => {
-                let id = state.current_id;
-                state.current_id += 1;
+                let id = state.current_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+
                 let message_payload = serde_json::to_string(&ServerMessage {
                     id,
                     payload: &event
                 })?;
+                state.messages.lock().await.borrow_mut().push((event, id));
 
-                state.messages.push((event, id));
                 socket.send(Message::Text(message_payload)).await?;
             }
             // Every 100ms, check if we need to resend any messages
             _ = interval.tick() => {
-                for (event, id) in &state.messages {
-                    if !state.acks.contains(&id) {
+                let messages = state.messages.lock().await;
+                let mut messages_to_send = Vec::new();
+                for (event, id) in messages.borrow().iter() {
+                    if !acks.contains(id) {
                         let message_payload = serde_json::to_string(event).unwrap();
-                        socket.send(Message::Text(message_payload)).await?;
+                        messages_to_send.push(Message::Text(message_payload));
                     }
                 };
+
+                for message in messages_to_send {
+                    socket.send(message).await?;
+                }
             }
             message = socket.recv() => {
                 if let Some(Ok(message)) = message {
@@ -208,19 +219,34 @@ async fn handle_socket_inner(mut socket: WebSocket, state: AppState) -> Result<(
                     if let Ok(event) = serde_json::from_str::<ClientMessage>(&message_payload) {
                         match event {
                             ClientMessage::Ack { id } => {
-                                state.acks.insert(id);
+                                acks.insert(id);
                             }
                             ClientMessage::CatchUp { start_id } => {
-                                // TODO: implement
+                                let mut messages_to_send = Vec::new();
+                                for (event, id) in state.messages.lock().await.borrow().iter() {
+                                    if id >= &start_id {
+                                        continue;
+                                    }
+                                    let message_payload = serde_json::to_string(event).unwrap();
+                                    messages_to_send.push(Message::Text(message_payload));
+                                }
+
+                                for message in messages_to_send {
+                                    socket.send(message).await?;
+                                }
                             }
                         }
                     } else {
                         warn!("failed to deserialize message from client: {message_payload}");
                     }
+                } else {
+                    break 'socket_loop;
                 }
             },
         }
     }
+
+    Ok(())
 }
 
 pub async fn start_ws_server(
@@ -237,9 +263,8 @@ pub async fn start_ws_server(
         .layer(cors)
         .with_state(AppState {
             rx,
-            acks: HashSet::new(),
-            messages: Vec::new(),
-            current_id: 0,
+            messages: Default::default(),
+            current_id: Arc::new(AtomicU32::new(0)),
         });
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:1337").await?;

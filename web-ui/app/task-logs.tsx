@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function TaskLogs() {
   const [logs, setLogs] = useState<{ [s: string]: string }>({});
+  const [messagesSeen, setMessagesSeen] = useState({});
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   useInterval(() => {
@@ -18,18 +19,20 @@ export default function TaskLogs() {
       const textDecoder = new TextDecoder();
 
       socketRef.current.onerror = (event) => {
-        socketRef.current.send(
-          JSON.stringify({
-            type: "CatchUp",
-            payload: { start_id: 0 },
-          })
-        );
+        console.log("error");
       };
 
       socketRef.current.onmessage = (event) => {
         const data = JSON.parse(event.data);
         const byteArray = new Uint8Array(data.payload.output);
         const rawLogs = textDecoder.decode(byteArray);
+        if (data.id in messagesSeen) {
+          return;
+        }
+        setMessagesSeen((messagesSeen) => ({
+          ...messagesSeen,
+          [data.id]: true,
+        }));
         console.log(data);
         if (data.type === "TaskOutput") {
           setLogs((logs) => {
@@ -39,7 +42,7 @@ export default function TaskLogs() {
             };
           });
         }
-        socketRef.current.send(
+        socketRef.current?.send(
           JSON.stringify({
             type: "Ack",
             payload: { id: data.id },
@@ -48,6 +51,12 @@ export default function TaskLogs() {
       };
 
       socketRef.current.onopen = () => {
+        socketRef.current?.send(
+          JSON.stringify({
+            type: "CatchUp",
+            payload: { start_id: 0 },
+          })
+        );
         console.log("connected!");
         setConnected(true);
       };

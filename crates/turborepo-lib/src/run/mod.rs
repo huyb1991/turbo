@@ -194,15 +194,7 @@ impl Run {
             .ok_or(Error::SignalHandler(std::io::ErrorKind::BrokenPipe.into()))?;
         let (tx, rx) = tokio::sync::broadcast::channel(100);
 
-        let handle = tokio::spawn(async {
-            select! {
-                _ = turborepo_ui::wui::start_ws_server(rx) => Ok(()),
-                _ = subscriber.listen() => {
-                    println!("shutting down");
-                    Ok(())
-                }
-            }
-        });
+        let handle = tokio::spawn(turborepo_ui::wui::start_ws_server(rx));
 
         Ok(Some((WebUISender { tx }, handle)))
     }
