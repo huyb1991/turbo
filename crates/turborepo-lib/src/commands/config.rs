@@ -1,3 +1,4 @@
+use camino::Utf8Path;
 use serde::Serialize;
 use turborepo_repository::{
     package_graph::PackageGraph, package_json::PackageJson, package_manager::PackageManager,
@@ -22,6 +23,7 @@ struct ConfigOutput<'a> {
     package_manager: PackageManager,
     daemon: Option<bool>,
     env_mode: EnvMode,
+    cache_dir: &'a Utf8Path,
 }
 
 pub async fn run(base: CommandBase) -> Result<(), cli::Error> {
@@ -51,6 +53,7 @@ pub async fn run(base: CommandBase) -> Result<(), cli::Error> {
             package_manager: *package_manager,
             daemon: config.daemon,
             env_mode: config.env_mode(),
+            cache_dir: config.cache_dir(),
         })?
     );
     Ok(())
