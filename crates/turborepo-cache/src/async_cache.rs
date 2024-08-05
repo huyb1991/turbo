@@ -254,7 +254,7 @@ mod tests {
         let hash = format!("{}-no-fs", test_case.hash);
 
         let opts = CacheOpts {
-            cache_dir: Utf8PathBuf::new(),
+            cache_dir: Utf8PathBuf::from(".turbo/cache"),
             remote_cache_read_only: false,
             skip_remote: false,
             skip_filesystem: true,
@@ -336,7 +336,7 @@ mod tests {
         let hash = format!("{}-no-remote", test_case.hash);
 
         let opts = CacheOpts {
-            cache_dir: Utf8PathBuf::new(),
+            cache_dir: Utf8PathBuf::from(".turbo/cache"),
             remote_cache_read_only: false,
             skip_remote: true,
             skip_filesystem: false,
@@ -428,7 +428,7 @@ mod tests {
         let hash = format!("{}-both", test_case.hash);
 
         let opts = CacheOpts {
-            cache_dir: Utf8PathBuf::new(),
+            cache_dir: Utf8PathBuf::from(".turbo/cache"),
             remote_cache_read_only: false,
             skip_remote: false,
             skip_filesystem: false,
