@@ -18,7 +18,7 @@ Run test run
     "packageManager": "npm",
     "daemon": null,
     "envMode": "strict",
-    "cacheDir": ".turbo/cache",
+    "cacheDir": ".turbo/cache"
   }
 
 Run test run with api overloaded
@@ -93,7 +93,7 @@ Add flag: `--env-mode=loose`
 
 No cacheDir by default
   $ ${TURBO} config | jq .cacheDir
-  .turbo/cache
+  ".turbo/cache"
 
 Add env var: `TURBO_CACHE_DIR=/nebulo9`
   $ TURBO_CACHE_DIR=/nebulo9 ${TURBO} config | jq .cacheDir
